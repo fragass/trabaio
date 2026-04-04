@@ -1,10 +1,12 @@
 const boardEl = document.getElementById("board");
 const userInfoEl = document.getElementById("userInfo");
+const profileDropdownUser = document.getElementById("profileDropdownUser");
+const profileAvatar = document.getElementById("profileAvatar");
+const profileMenu = document.getElementById("profileMenu");
+const profileTrigger = document.getElementById("profileTrigger");
 const logoutBtn = document.getElementById("logoutBtn");
-const saveBoardBtn = document.getElementById("saveBoardBtn");
 
-const contextMenu = document.getElementById("contextMenu");
-const newColumnBtn = document.getElementById("newColumnBtn");
+const floatingAddColumnBtn = document.getElementById("floatingAddColumnBtn");
 
 const cardModal = document.getElementById("cardModal");
 const cardTitleInput = document.getElementById("cardTitleInput");
@@ -13,19 +15,105 @@ const closeModalBtn = document.getElementById("closeModalBtn");
 const saveCardBtn = document.getElementById("saveCardBtn");
 const deleteCardBtn = document.getElementById("deleteCardBtn");
 
+const columnModal = document.getElementById("columnModal");
+const columnModalTitle = document.getElementById("columnModalTitle");
+const columnNameInput = document.getElementById("columnNameInput");
+const closeColumnModalBtn = document.getElementById("closeColumnModalBtn");
+const saveColumnBtn = document.getElementById("saveColumnBtn");
+const deleteColumnBtn = document.getElementById("deleteColumnBtn");
+
+const confirmModal = document.getElementById("confirmModal");
+const confirmTitle = document.getElementById("confirmTitle");
+const confirmMessage = document.getElementById("confirmMessage");
+const closeConfirmModalBtn = document.getElementById("closeConfirmModalBtn");
+const cancelConfirmBtn = document.getElementById("cancelConfirmBtn");
+const acceptConfirmBtn = document.getElementById("acceptConfirmBtn");
+
+const toastContainer = document.getElementById("toastContainer");
+
 let loggedUser = sessionStorage.getItem("loggedUser");
 let boardData = [];
 let activeCardRef = null;
+let activeColumnRef = null;
+let confirmAction = null;
+let saveTimeout = null;
+let isSaving = false;
 
 if (!loggedUser) {
   window.location.href = "index.html";
 }
 
-userInfoEl.textContent = loggedUser ? `@${loggedUser}` : "";
+const usernameLabel = loggedUser ? `@${loggedUser}` : "@usuario";
+userInfoEl.textContent = usernameLabel;
+profileDropdownUser.textContent = usernameLabel;
+profileAvatar.textContent = (loggedUser || "u").charAt(0).toUpperCase();
+
+profileTrigger.addEventListener("click", () => {
+  profileMenu.classList.toggle("open");
+});
+
+document.addEventListener("click", (event) => {
+  if (!profileMenu.contains(event.target)) {
+    profileMenu.classList.remove("open");
+  }
+});
 
 function uid(prefix = "id") {
   return `${prefix}-${crypto.randomUUID()}`;
 }
+
+function showToast(title, text = "", type = "") {
+  const toast = document.createElement("div");
+  toast.className = `toast ${type}`.trim();
+
+  const titleEl = document.createElement("div");
+  titleEl.className = "toast-title";
+  titleEl.textContent = title;
+
+  const textEl = document.createElement("div");
+  textEl.className = "toast-text";
+  textEl.textContent = text;
+
+  toast.appendChild(titleEl);
+  if (text) {
+    toast.appendChild(textEl);
+  }
+
+  toastContainer.appendChild(toast);
+
+  setTimeout(() => {
+    toast.remove();
+  }, 2600);
+}
+
+function openModal(modal) {
+  modal.classList.remove("hidden");
+}
+
+function closeModal(modal) {
+  modal.classList.add("hidden");
+}
+
+function openConfirm(title, message, onAccept) {
+  confirmTitle.textContent = title;
+  confirmMessage.textContent = message;
+  confirmAction = onAccept;
+  openModal(confirmModal);
+}
+
+function closeConfirm() {
+  confirmAction = null;
+  closeModal(confirmModal);
+}
+
+closeConfirmModalBtn.addEventListener("click", closeConfirm);
+cancelConfirmBtn.addEventListener("click", closeConfirm);
+acceptConfirmBtn.addEventListener("click", () => {
+  if (typeof confirmAction === "function") {
+    confirmAction();
+  }
+  closeConfirm();
+});
 
 async function loadBoard() {
   try {
@@ -33,19 +121,23 @@ async function loadBoard() {
     const result = await res.json();
 
     if (!res.ok) {
-      alert(result.error || "Erro ao carregar board.");
+      showToast("Erro", result.error || "Erro ao carregar board.", "error");
       return;
     }
 
     boardData = Array.isArray(result.board?.data) ? result.board.data : [];
     renderBoard();
   } catch (err) {
-    alert("Erro ao carregar o board.");
+    showToast("Erro", "Erro ao carregar o board.", "error");
   }
 }
 
-async function saveBoard() {
+async function saveBoard(showFeedback = false) {
+  if (isSaving) return;
+
   try {
+    isSaving = true;
+
     const res = await fetch("/api/board", {
       method: "POST",
       headers: {
@@ -60,11 +152,25 @@ async function saveBoard() {
     const result = await res.json();
 
     if (!res.ok) {
-      alert(result.error || "Erro ao salvar board.");
+      showToast("Erro", result.error || "Erro ao salvar board.", "error");
+      return;
+    }
+
+    if (showFeedback) {
+      showToast("Salvo", "Tudo salvo automaticamente.", "success");
     }
   } catch (err) {
-    alert("Erro ao salvar board.");
+    showToast("Erro", "Erro ao salvar board.", "error");
+  } finally {
+    isSaving = false;
   }
+}
+
+function scheduleSave(showFeedback = false) {
+  clearTimeout(saveTimeout);
+  saveTimeout = setTimeout(() => {
+    saveBoard(showFeedback);
+  }, 450);
 }
 
 function renderBoard() {
@@ -85,15 +191,10 @@ function renderBoard() {
     actions.className = "column-actions";
 
     const renameBtn = document.createElement("button");
-    renameBtn.textContent = "Renomear";
-    renameBtn.addEventListener("click", () => renameColumn(column.id));
-
-    const removeBtn = document.createElement("button");
-    removeBtn.textContent = "Excluir";
-    removeBtn.addEventListener("click", () => deleteColumn(column.id));
+    renameBtn.textContent = "Editar";
+    renameBtn.addEventListener("click", () => openColumnEditModal(column.id));
 
     actions.appendChild(renameBtn);
-    actions.appendChild(removeBtn);
 
     header.appendChild(title);
     header.appendChild(actions);
@@ -104,7 +205,7 @@ function renderBoard() {
     column.cards.forEach((card) => {
       const cardEl = document.createElement("article");
       cardEl.className = "card";
-      cardEl.addEventListener("click", () => openCardModal(column.id, card.id));
+      cardEl.addEventListener("click", () => openCardEditor(column.id, card.id));
 
       const cardTitle = document.createElement("div");
       cardTitle.className = "card-title";
@@ -154,44 +255,23 @@ function createCard(columnId) {
 
   column.cards.push(newCard);
   renderBoard();
-  openCardModal(columnId, newCard.id);
+  scheduleSave();
+  openCardEditor(columnId, newCard.id);
 }
 
-function renameColumn(columnId) {
-  const column = findColumn(columnId);
-  if (!column) return;
-
-  const nextTitle = prompt("Novo nome da coluna:", column.title);
-  if (!nextTitle || !nextTitle.trim()) return;
-
-  column.title = nextTitle.trim();
-  renderBoard();
-}
-
-function deleteColumn(columnId) {
-  const column = findColumn(columnId);
-  if (!column) return;
-
-  const confirmed = confirm(`Excluir coluna "${column.title}"?`);
-  if (!confirmed) return;
-
-  boardData = boardData.filter((col) => col.id !== columnId);
-  renderBoard();
-}
-
-function openCardModal(columnId, cardId) {
+function openCardEditor(columnId, cardId) {
   const card = findCard(columnId, cardId);
   if (!card) return;
 
   activeCardRef = { columnId, cardId };
   cardTitleInput.value = card.title || "";
   cardDescInput.value = card.description || "";
-  cardModal.classList.remove("hidden");
+  openModal(cardModal);
 }
 
-function closeCardModal() {
+function closeCardEditor() {
   activeCardRef = null;
-  cardModal.classList.add("hidden");
+  closeModal(cardModal);
 }
 
 function saveCardChanges() {
@@ -204,7 +284,8 @@ function saveCardChanges() {
   card.description = cardDescInput.value.trim();
 
   renderBoard();
-  closeCardModal();
+  closeCardEditor();
+  scheduleSave(true);
 }
 
 function deleteCard() {
@@ -215,51 +296,106 @@ function deleteCard() {
 
   column.cards = column.cards.filter((card) => card.id !== activeCardRef.cardId);
   renderBoard();
-  closeCardModal();
+  closeCardEditor();
+  scheduleSave(true);
+  showToast("Card removido", "O card foi excluído.", "success");
 }
 
-function openContextMenu(x, y) {
-  contextMenu.style.left = `${x}px`;
-  contextMenu.style.top = `${y}px`;
-  contextMenu.classList.remove("hidden");
+function openColumnCreateModal() {
+  activeColumnRef = null;
+  columnModalTitle.textContent = "Nova coluna";
+  columnNameInput.value = "";
+  deleteColumnBtn.classList.add("hidden");
+  openModal(columnModal);
 }
 
-function closeContextMenu() {
-  contextMenu.classList.add("hidden");
+function openColumnEditModal(columnId) {
+  const column = findColumn(columnId);
+  if (!column) return;
+
+  activeColumnRef = columnId;
+  columnModalTitle.textContent = "Editar coluna";
+  columnNameInput.value = column.title || "";
+  deleteColumnBtn.classList.remove("hidden");
+  openModal(columnModal);
 }
 
-function createColumn() {
-  const name = prompt("Nome da nova coluna:");
-  if (!name || !name.trim()) return;
-
-  boardData.push({
-    id: uid("col"),
-    title: name.trim(),
-    cards: []
-  });
-
-  renderBoard();
+function closeColumnEditor() {
+  activeColumnRef = null;
+  columnNameInput.value = "";
+  closeModal(columnModal);
 }
 
-document.addEventListener("contextmenu", (e) => {
-  e.preventDefault();
-  openContextMenu(e.pageX, e.pageY);
-});
+function saveColumnChanges() {
+  const name = columnNameInput.value.trim();
 
-document.addEventListener("click", (e) => {
-  if (!contextMenu.contains(e.target)) {
-    closeContextMenu();
+  if (!name) {
+    showToast("Campo vazio", "Digite um nome para a coluna.", "error");
+    return;
   }
-});
 
-newColumnBtn.addEventListener("click", () => {
-  createColumn();
-  closeContextMenu();
-});
+  if (!activeColumnRef) {
+    boardData.push({
+      id: uid("col"),
+      title: name,
+      cards: []
+    });
 
-closeModalBtn.addEventListener("click", closeCardModal);
+    renderBoard();
+    closeColumnEditor();
+    scheduleSave(true);
+    showToast("Coluna criada", "A nova coluna já foi adicionada.", "success");
+    return;
+  }
+
+  const column = findColumn(activeColumnRef);
+  if (!column) return;
+
+  column.title = name;
+  renderBoard();
+  closeColumnEditor();
+  scheduleSave(true);
+  showToast("Coluna atualizada", "O nome da coluna foi salvo.", "success");
+}
+
+function requestDeleteColumn() {
+  if (!activeColumnRef) return;
+
+  const column = findColumn(activeColumnRef);
+  if (!column) return;
+
+  openConfirm(
+    "Excluir coluna",
+    `Tem certeza que deseja excluir a coluna "${column.title}"?`,
+    () => {
+      boardData = boardData.filter((col) => col.id !== activeColumnRef);
+      renderBoard();
+      closeColumnEditor();
+      scheduleSave(true);
+      showToast("Coluna removida", "A coluna foi excluída.", "success");
+    }
+  );
+}
+
+function requestDeleteCard() {
+  if (!activeCardRef) return;
+
+  openConfirm(
+    "Excluir card",
+    "Tem certeza que deseja excluir este card?",
+    deleteCard
+  );
+}
+
+closeModalBtn.addEventListener("click", closeCardEditor);
 saveCardBtn.addEventListener("click", saveCardChanges);
-deleteCardBtn.addEventListener("click", deleteCard);
+deleteCardBtn.addEventListener("click", requestDeleteCard);
+
+closeColumnModalBtn.addEventListener("click", closeColumnEditor);
+saveColumnBtn.addEventListener("click", saveColumnChanges);
+deleteColumnBtn.addEventListener("click", requestDeleteColumn);
+
+floatingAddColumnBtn.addEventListener("click", openColumnCreateModal);
 
 logoutBtn.addEventListener("click", () => {
   sessionStorage.removeItem("token");
@@ -268,9 +404,27 @@ logoutBtn.addEventListener("click", () => {
   window.location.href = "index.html";
 });
 
-saveBoardBtn.addEventListener("click", saveBoard);
+cardModal.addEventListener("click", (event) => {
+  if (event.target === cardModal) {
+    closeCardEditor();
+  }
+});
+
+columnModal.addEventListener("click", (event) => {
+  if (event.target === columnModal) {
+    closeColumnEditor();
+  }
+});
+
+confirmModal.addEventListener("click", (event) => {
+  if (event.target === confirmModal) {
+    closeConfirm();
+  }
+});
 
 window.addEventListener("beforeunload", () => {
+  if (!loggedUser) return;
+
   navigator.sendBeacon?.(
     "/api/board",
     new Blob(
