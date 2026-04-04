@@ -1,0 +1,268 @@
+* {
+  box-sizing: border-box;
+}
+
+:root {
+  --bg: #0b0f14;
+  --panel: #121821;
+  --panel-2: #0f141c;
+  --border: #1f2a38;
+  --text: #e8edf2;
+  --muted: #98a6b8;
+  --accent: #2f81f7;
+  --accent-hover: #1f6fe0;
+  --danger: #ff4d4f;
+  --shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+}
+
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+body {
+  overflow: hidden;
+}
+
+.topbar {
+  height: 64px;
+  border-bottom: 1px solid var(--border);
+  background: rgba(18, 24, 33, 0.96);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 18px;
+}
+
+.topbar-left,
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+#userInfo {
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.topbar button {
+  border: 0;
+  background: var(--accent);
+  color: #fff;
+  padding: 10px 14px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.topbar button:hover {
+  background: var(--accent-hover);
+}
+
+.board {
+  height: calc(100vh - 64px);
+  overflow-x: auto;
+  overflow-y: hidden;
+  display: flex;
+  gap: 16px;
+  padding: 18px;
+  align-items: flex-start;
+}
+
+.board::-webkit-scrollbar {
+  height: 10px;
+}
+
+.board::-webkit-scrollbar-track {
+  background: #0f141c;
+}
+
+.board::-webkit-scrollbar-thumb {
+  background: #293244;
+  border-radius: 999px;
+}
+
+.column {
+  width: 320px;
+  min-width: 320px;
+  max-height: calc(100vh - 100px);
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: var(--shadow);
+}
+
+.column-header {
+  padding: 14px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.column-title {
+  font-size: 15px;
+  font-weight: bold;
+  word-break: break-word;
+}
+
+.column-actions button {
+  border: 0;
+  background: #1b2331;
+  color: #fff;
+  padding: 8px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.cards {
+  padding: 12px;
+  display: grid;
+  gap: 10px;
+  overflow-y: auto;
+}
+
+.cards::-webkit-scrollbar {
+  width: 8px;
+}
+
+.cards::-webkit-scrollbar-thumb {
+  background: #2a3345;
+  border-radius: 999px;
+}
+
+.card {
+  background: var(--panel-2);
+  border: 1px solid #273145;
+  border-radius: 14px;
+  padding: 12px;
+  cursor: pointer;
+  transition: transform 0.12s ease, border-color 0.12s ease;
+}
+
+.card:hover {
+  transform: translateY(-1px);
+  border-color: #3a4b69;
+}
+
+.card-title {
+  font-size: 14px;
+  font-weight: bold;
+  margin-bottom: 6px;
+}
+
+.card-desc {
+  font-size: 13px;
+  color: var(--muted);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.add-card-btn {
+  margin: 0 12px 12px;
+  border: 1px dashed #34415b;
+  background: transparent;
+  color: #c9d3e1;
+  padding: 12px;
+  border-radius: 12px;
+  cursor: pointer;
+}
+
+.hidden {
+  display: none !important;
+}
+
+.context-menu {
+  position: fixed;
+  z-index: 50;
+  background: #161d29;
+  border: 1px solid #293246;
+  border-radius: 12px;
+  padding: 8px;
+  min-width: 180px;
+  box-shadow: var(--shadow);
+}
+
+.context-menu button {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  color: #fff;
+  padding: 10px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  text-align: left;
+}
+
+.context-menu button:hover {
+  background: #212b3c;
+}
+
+.modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  display: grid;
+  place-items: center;
+  z-index: 100;
+  padding: 18px;
+}
+
+.modal-box {
+  width: 100%;
+  max-width: 560px;
+  background: var(--panel);
+  border: 1px solid #253048;
+  border-radius: 18px;
+  padding: 20px;
+}
+
+.modal-box h2 {
+  margin-top: 0;
+}
+
+.modal-box input,
+.modal-box textarea {
+  width: 100%;
+  margin-top: 10px;
+  background: #0d121a;
+  color: #fff;
+  border: 1px solid #2c3750;
+  border-radius: 12px;
+  padding: 14px;
+  outline: none;
+}
+
+.modal-box textarea {
+  min-height: 160px;
+  resize: vertical;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.modal-actions button {
+  border: 0;
+  background: #1c2533;
+  color: white;
+  padding: 12px 14px;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.modal-actions .danger {
+  background: #5b2020;
+  margin-right: auto;
+}
