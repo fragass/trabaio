@@ -62,6 +62,9 @@ textarea {
 
 .profile-menu {
   position: relative;
+  display: flex;
+  align-items: stretch;
+  padding-bottom: 0;
 }
 
 .profile-trigger {
@@ -99,7 +102,7 @@ textarea {
 
 .profile-dropdown {
   position: absolute;
-  top: calc(100% + 8px);
+  top: calc(100% - 6px);
   right: 0;
   width: 160px;
   background: rgba(14, 20, 30, 0.98);
@@ -111,10 +114,21 @@ textarea {
   pointer-events: none;
   transform: translateY(-4px);
   transition: opacity 0.18s ease, transform 0.18s ease;
+  z-index: 60;
+}
+
+.profile-menu::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  right: 0;
+  width: 180px;
+  height: 14px;
 }
 
 .profile-menu:hover .profile-dropdown,
-.profile-menu.open .profile-dropdown {
+.profile-menu.open .profile-dropdown,
+.profile-dropdown:hover {
   opacity: 1;
   pointer-events: auto;
   transform: translateY(0);
@@ -417,7 +431,7 @@ textarea {
 
 .toast-container {
   position: fixed;
-  right: 18px;
+  left: 18px;
   bottom: 92px;
   display: grid;
   gap: 10px;
@@ -488,5 +502,10 @@ textarea {
   .floating-add-column {
     right: 16px;
     bottom: 16px;
+  }
+
+  .toast-container {
+    left: 14px;
+    bottom: 84px;
   }
 }
