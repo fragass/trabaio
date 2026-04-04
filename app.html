@@ -29,15 +29,29 @@
     +
   </button>
 
+  <div id="contextMenu" class="context-menu hidden">
+    <button id="ctxAddColumnBtn" type="button">Nova coluna</button>
+    <button id="ctxAddCardBtn" type="button">Novo card</button>
+    <button id="ctxAddCheckCardBtn" type="button">Novo card checkbox</button>
+    <button id="ctxEditBtn" type="button">Editar</button>
+    <button id="ctxToggleDoneBtn" type="button">Marcar como concluído</button>
+    <button id="ctxDeleteBtn" class="danger" type="button">Remover</button>
+  </div>
+
   <div id="cardModal" class="modal hidden">
     <div class="modal-box">
       <div class="modal-header">
-        <h2>Card</h2>
+        <h2 id="cardModalTitle">Card</h2>
         <button id="closeModalBtn" class="icon-btn" type="button">×</button>
       </div>
 
       <input id="cardTitleInput" type="text" placeholder="Título do card" />
       <textarea id="cardDescInput" placeholder="Descrição"></textarea>
+
+      <label class="checkbox-row">
+        <input id="cardDoneInput" type="checkbox" />
+        <span>Concluído</span>
+      </label>
 
       <div class="modal-actions">
         <button id="deleteCardBtn" class="danger" type="button">Excluir</button>
