@@ -3,41 +3,86 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Board</title>
+  <title>App</title>
   <link rel="stylesheet" href="css/board.css" />
 </head>
 <body>
   <header class="topbar">
     <div class="topbar-left">
-      <strong>Board</strong>
-      <span id="userInfo"></span>
+      <div class="brand-dot" aria-hidden="true"></div>
     </div>
 
     <div class="topbar-right">
-      <button id="saveBoardBtn">Salvar</button>
-      <button id="logoutBtn">Sair</button>
+      <div class="profile-menu" id="profileMenu">
+        <button class="profile-trigger" id="profileTrigger" type="button">
+          <span class="profile-avatar" id="profileAvatar">U</span>
+          <span class="profile-name" id="userInfo">@usuario</span>
+        </button>
+
+        <div class="profile-dropdown" id="profileDropdown">
+          <div class="profile-dropdown-user" id="profileDropdownUser">@usuario</div>
+          <button id="logoutBtn" class="dropdown-logout" type="button">Sair</button>
+        </div>
+      </div>
     </div>
   </header>
 
   <main id="board" class="board"></main>
 
-  <div id="contextMenu" class="context-menu hidden">
-    <button id="newColumnBtn">Nova coluna</button>
-  </div>
+  <button id="floatingAddColumnBtn" class="floating-add-column" type="button" title="Nova coluna">
+    +
+  </button>
 
   <div id="cardModal" class="modal hidden">
     <div class="modal-box">
-      <h2>Card</h2>
+      <div class="modal-header">
+        <h2>Card</h2>
+        <button id="closeModalBtn" class="icon-btn" type="button">×</button>
+      </div>
+
       <input id="cardTitleInput" type="text" placeholder="Título do card" />
       <textarea id="cardDescInput" placeholder="Descrição"></textarea>
 
       <div class="modal-actions">
-        <button id="deleteCardBtn" class="danger">Excluir</button>
-        <button id="closeModalBtn">Fechar</button>
-        <button id="saveCardBtn">Salvar card</button>
+        <button id="deleteCardBtn" class="danger" type="button">Excluir</button>
+        <button id="saveCardBtn" type="button">Salvar</button>
       </div>
     </div>
   </div>
+
+  <div id="columnModal" class="modal hidden">
+    <div class="modal-box modal-box-small">
+      <div class="modal-header">
+        <h2 id="columnModalTitle">Nova coluna</h2>
+        <button id="closeColumnModalBtn" class="icon-btn" type="button">×</button>
+      </div>
+
+      <input id="columnNameInput" type="text" placeholder="Nome da coluna" />
+
+      <div class="modal-actions">
+        <button id="deleteColumnBtn" class="danger hidden" type="button">Excluir</button>
+        <button id="saveColumnBtn" type="button">Salvar</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="confirmModal" class="modal hidden">
+    <div class="modal-box modal-box-small">
+      <div class="modal-header">
+        <h2 id="confirmTitle">Confirmar</h2>
+        <button id="closeConfirmModalBtn" class="icon-btn" type="button">×</button>
+      </div>
+
+      <p id="confirmMessage" class="confirm-message">Tem certeza?</p>
+
+      <div class="modal-actions">
+        <button id="cancelConfirmBtn" type="button">Cancelar</button>
+        <button id="acceptConfirmBtn" class="danger" type="button">Confirmar</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toastContainer" class="toast-container"></div>
 
   <script src="js/app.js"></script>
 </body>
