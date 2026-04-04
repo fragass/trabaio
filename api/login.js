@@ -1,9 +1,13 @@
 import { createClient } from "@supabase/supabase-js";
 
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY
-);
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+if (!supabaseUrl || !supabaseServiceRoleKey) {
+  throw new Error("SUPABASE_URL ou SUPABASE_SERVICE_ROLE_KEY não configuradas.");
+}
+
+const supabase = createClient(supabaseUrl, supabaseServiceRoleKey);
 
 function makeToken(username) {
   return Buffer.from(`${username}:${Date.now()}`).toString("base64");
@@ -11,21 +15,21 @@ function makeToken(username) {
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {
-    return res.status(405).json({ error: "Método não permitido" });
+    return res.status(405).json({ error: "Método não permitido." });
   }
 
   try {
     const body =
       typeof req.body === "string"
         ? JSON.parse(req.body)
-        : req.body;
+        : (req.body || {});
 
-    const username = String(body?.username || "").trim();
-    const password = String(body?.password || "").trim();
+    const username = String(body.username || "").trim();
+    const password = String(body.password || "").trim();
 
     if (!username || !password) {
       return res.status(400).json({
-        error: "Username e password são obrigatórios."
+        error: "Usuário e senha são obrigatórios."
       });
     }
 
@@ -36,11 +40,22 @@ export default async function handler(req, res) {
       .maybeSingle();
 
     if (error) {
-      return res.status(500).json({ error: error.message });
+      console.error("Supabase select error:", error);
+      return res.status(500).json({
+        error: `Erro ao consultar users: ${error.message}`
+      });
     }
 
-    if (!data || data.password !== password) {
-      return res.status(401).json({ error: "Credenciais inválidas." });
+    if (!data) {
+      return res.status(401).json({
+        error: "Usuário não encontrado."
+      });
+    }
+
+    if (data.password !== password) {
+      return res.status(401).json({
+        error: "Senha inválida."
+      });
     }
 
     return res.status(200).json({
@@ -50,8 +65,9 @@ export default async function handler(req, res) {
       isAdmin: !!data.is_admin
     });
   } catch (err) {
+    console.error("Login API fatal error:", err);
     return res.status(500).json({
-      error: err.message || "Erro interno no servidor"
+      error: err.message || "Erro interno no servidor."
     });
   }
 }
