@@ -1,7 +1,5 @@
 const boardEl = document.getElementById("board");
 const userInfoEl = document.getElementById("userInfo");
-const profileDropdownUser = document.getElementById("profileDropdownUser");
-const profileAvatar = document.getElementById("profileAvatar");
 const profileMenu = document.getElementById("profileMenu");
 const profileTrigger = document.getElementById("profileTrigger");
 const logoutBtn = document.getElementById("logoutBtn");
@@ -45,10 +43,9 @@ if (!loggedUser) {
 
 const usernameLabel = loggedUser ? `@${loggedUser}` : "@usuario";
 userInfoEl.textContent = usernameLabel;
-profileDropdownUser.textContent = usernameLabel;
-profileAvatar.textContent = (loggedUser || "u").charAt(0).toUpperCase();
 
-profileTrigger.addEventListener("click", () => {
+profileTrigger.addEventListener("click", (event) => {
+  event.stopPropagation();
   profileMenu.classList.toggle("open");
 });
 
@@ -364,11 +361,13 @@ function requestDeleteColumn() {
   const column = findColumn(activeColumnRef);
   if (!column) return;
 
+  const targetColumnId = activeColumnRef;
+
   openConfirm(
     "Excluir coluna",
     `Tem certeza que deseja excluir a coluna "${column.title}"?`,
     () => {
-      boardData = boardData.filter((col) => col.id !== activeColumnRef);
+      boardData = boardData.filter((col) => col.id !== targetColumnId);
       renderBoard();
       closeColumnEditor();
       scheduleSave(true);
